@@ -1,10 +1,8 @@
-package com.portfolio.userservice.entity.dto;
+package com.portfolio.gateway_security.representation.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Data;
 
-@Data
 public class ResponseDto<T> {
 
     private T data;

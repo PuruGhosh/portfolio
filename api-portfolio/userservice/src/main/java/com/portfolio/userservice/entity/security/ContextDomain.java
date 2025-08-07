@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum ContextDomain {
-    AUTH("auth"),
+    UNKNOWN(""),
     USERS("users"),
     PROJECTS("projects"),
     SKILLS("skills");
@@ -25,10 +25,11 @@ public enum ContextDomain {
         return value;
     }
 
-  public static Optional<ContextDomain> from(String input) {
-    return Arrays.stream(ContextDomain.values())
-        .filter(cd -> cd.value.equalsIgnoreCase(input))
-        .findFirst();
-        }
+    public static ContextDomain from(String input) {
+        return Arrays.stream(ContextDomain.values())
+                .filter(cd -> cd != UNKNOWN && cd.value.equalsIgnoreCase(input))
+                .findFirst()
+                .orElse(UNKNOWN);
+    }
 }
 

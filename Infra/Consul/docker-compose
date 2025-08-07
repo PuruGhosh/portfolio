@@ -1,0 +1,25 @@
+# Use the official Consul image as the base image
+FROM hashicorp/consul:latest
+
+# Set environment variables for Consul configuration
+ENV CONSUL_BIND_INTERFACE=eth0
+
+USER root
+
+# Optional: Add a shell script to initialize key-value pairs or other Consul setup
+# Copy your initialization script to the image
+COPY seed-consul.sh /seed-consul.sh
+
+# Make the script executable
+RUN chmod +x /seed-consul.sh
+
+CMD ["/seed-consul.sh"]
+
+RUN ls
+
+# Expose Consul's ports
+# HTTP API port: 8500, DNS service discovery port: 8600
+EXPOSE 8500 8600/udp
+
+# Run the Consul agent and the initialization script
+ENTRYPOINT [ "sh", "-c", "/bin/consul agent -dev -client=0.0.0.0 & /seed-consul.sh && tail -f /dev/null" ]

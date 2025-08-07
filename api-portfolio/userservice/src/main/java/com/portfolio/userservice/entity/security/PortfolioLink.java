@@ -31,8 +31,7 @@ public class PortfolioLink {
         String version = segments.get(2) + "/" + segments.get(3);
         String domainStr = segments.get(4);
 
-        ContextDomain domain = ContextDomain.from(domainStr)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown domain: " + domainStr));
+        ContextDomain domain = ContextDomain.from(domainStr);
 
         UUID id = null;
         String remaining = null;

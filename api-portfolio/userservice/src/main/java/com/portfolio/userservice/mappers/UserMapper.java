@@ -2,8 +2,12 @@ package com.portfolio.userservice.mappers;
 
 import com.portfolio.userservice.entity.User;
 import com.portfolio.userservice.entity.dto.GetUserDto;
-import com.portfolio.userservice.entity.dto.UserDto;
+import com.portfolio.userservice.entity.dto.UserResponseDto;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.UUID;
+
+import com.portfolio.userservice.entity.representation.Tags;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -11,30 +15,42 @@ import org.springframework.util.Assert;
 public class UserMapper {
   private static final String NOT_UPDATED = "N/A";
 
-  public UserDto fromUserEntity(User user) {
+  public UserResponseDto fromUserEntity(User user) {
     Assert.notNull(user, "Null Arguments received");
-    return UserDto.builder()
+    return UserResponseDto.builder()
         .id(user.getId())
         .name(user.getName())
+        .roles(user.getRoles())
         .email(user.getEmail())
-        .role(user.getRole())
         .bio(user.getBio())
         .skills(user.getSkillIds())
-        .projects(user.getProjectIds())
+        .projectIds(user.getProjectIds())
+        .skillTags(user.getTags().getSkillTags())
+        .projectTags(user.getTags().getProjectTags())
         .build();
   }
 
-  public User fromUserDto(UserDto dto) {
+  public User fromUserDto(UserResponseDto dto) {
     Assert.notNull(dto, "Null arguments received");
-
     return User.builder()
         .id(dto.getId())
         .name(dto.getName())
         .email(dto.getEmail())
-        .role(dto.getRole())
+        .roles(dto.getRoles())
+        .tags(
+            Tags.builder()
+                .skillTags(
+                    Objects.isNull(dto.getSkillTags())
+                        ? Collections.emptyList()
+                        : dto.getSkillTags())
+                .projectTags(
+                    Objects.isNull(dto.getProjectTags())
+                        ? Collections.emptyList()
+                        : dto.getProjectTags())
+                .build())
         .bio(dto.getBio())
         .skillIds(dto.getSkills())
-        .projectIds(dto.getProjects())
+        .projectIds(dto.getProjectIds())
         .build();
   }
 
@@ -45,12 +61,21 @@ public class UserMapper {
         .id(UUID.randomUUID())
         .name(dto.getName())
         .email(dto.getEmail())
-        .username(dto.getUserName())
-        .password(dto.getPassword())
-        .role(dto.getRole() == null ? NOT_UPDATED : dto.getRole())
-        .bio(NOT_UPDATED)
+        .roles(dto.getRoles() == null ? Collections.emptyList() : dto.getRoles())
+        .bio(dto.getBio().isEmpty() ? NOT_UPDATED : dto.getBio())
         .skillIds(null)
         .projectIds(null)
+        .tags(
+            Tags.builder()
+                .skillTags(
+                    Objects.isNull(dto.getSkillTags())
+                        ? Collections.emptyList()
+                        : dto.getSkillTags())
+                .projectTags(
+                    Objects.isNull(dto.getProjectTags())
+                        ? Collections.emptyList()
+                        : dto.getProjectTags())
+                .build())
         .build();
   }
 }

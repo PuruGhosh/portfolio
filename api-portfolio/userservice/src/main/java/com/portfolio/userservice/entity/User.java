@@ -1,6 +1,7 @@
 package com.portfolio.userservice.entity;
 
 import com.portfolio.userservice.entity.representation.SkillReference;
+import com.portfolio.userservice.entity.representation.Tags;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,11 +22,9 @@ public class User {
     private UUID id;
     private String name;
     private String email;
-    private String username;
-    private String password;
     private String bio;
-    private String role;
+    private List<String> roles;
     private List<UUID> projectIds;
     private List<SkillReference> skillIds;
-    List<String> tags;
+    Tags tags;
 }

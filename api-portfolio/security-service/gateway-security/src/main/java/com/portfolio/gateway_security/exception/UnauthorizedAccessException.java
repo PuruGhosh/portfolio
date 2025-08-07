@@ -1,8 +1,7 @@
-package com.portfolio.userservice.exception;
+package com.portfolio.gateway_security.exception;
 
 import java.util.List;
 import lombok.EqualsAndHashCode;
-
 
 @EqualsAndHashCode(callSuper = false)
 public class UnauthorizedAccessException extends RuntimeException {

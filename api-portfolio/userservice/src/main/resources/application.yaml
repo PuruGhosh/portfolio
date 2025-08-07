@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: userservice
+  profiles:
+    active: default
+
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: portfolio
+      username: test
+      password: test
+      uri: mongodb://test:test@localhost:27017/admin?retryWrites=true&loadBalanced=false&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1
+      uuid-representation: standard
+
+  config:
+    import: optional:consul:localhost:8500
+
+  cloud:
+    consul:
+      config:
+        enabled: true
+        prefixes:
+          - config/app/api/userservice
+          - config/infra/mongodb
+        format: KEY_VALUE
+      discovery:
+        enabled: true
+        register: true
+        service-name: ${spring.application.name}
+        instance-id: ${spring.application.name}-${spring.application.instance_id:${random.value}}
+        health-check-path: /actuator/health
+        health-check-interval: 50s
+        prefer-ip-address: true
+
+    service-registry:
+      auto-registration:
+        enabled: true
+
+server:
+  port: 9000
+#  servlet:
+#    context-path: /portfolio/userservice
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+  endpoint:
+    health:
+      show-details: always
+
