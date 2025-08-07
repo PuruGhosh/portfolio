@@ -1,5 +1,7 @@
 package com.portfolio.gateway_security.filter;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.gateway_security.service.JwtService;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -21,39 +23,41 @@ public class DefaultDomainFilter implements GlobalFilter, Ordered {
 
     private final String jwtCookieName;
     private final JwtService jwtService;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public DefaultDomainFilter(@Value("${auth.jwt.cookie-name}") String jwtCookieName,
                                JwtService jwtService) {
-        this.jwtCookieName =  jwtCookieName;
+        this.jwtCookieName = jwtCookieName;
         this.jwtService = jwtService;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        String jwtToken =
-                Optional.ofNullable(exchange.getRequest().getCookies().getFirst(jwtCookieName))
-                        .map(HttpCookie::getValue)
-                        .orElse(null);
-        log.info("Found token {}",jwtToken);
+        String jwtToken = Optional.ofNullable(exchange.getRequest().getCookies().getFirst(jwtCookieName))
+                .map(HttpCookie::getValue)
+                .orElse(null);
+
         if (jwtToken == null || jwtToken.isBlank()) {
             return chain.filter(exchange); // No token, proceed without claims
         }
 
         return jwtService.validateUserAndGetClaim(jwtToken)
                 .flatMap(claims -> {
-                    log.info("Found claim {}", claims);
-                    // Encode claims as Base64 JSON string
-                    String base64Claims = Base64.getEncoder().encodeToString(claims.toString().getBytes(StandardCharsets.UTF_8));
+                    try {
+                        String base64Claims = Base64.getEncoder()
+                                .encodeToString(mapper.writeValueAsString(claims).getBytes(StandardCharsets.UTF_8));
 
-                    // Mutate the request to add the jwt-claim header
-                    ServerWebExchange mutatedExchange = exchange.mutate()
-                            .request(builder -> builder.header("jwt-claim", base64Claims))
-                            .build();
-                    mutatedExchange.getResponse().getHeaders().add("jwt-claim", base64Claims);
-                    return chain.filter(mutatedExchange);
+                        ServerWebExchange mutatedExchange = exchange.mutate()
+                                .request(builder -> builder.header("jwt-claim", base64Claims))
+                                .build();
+                        mutatedExchange.getResponse().getHeaders().add("jwt-claim", base64Claims);
+
+                        return chain.filter(mutatedExchange);
+                    } catch (JsonProcessingException e) {
+                        return Mono.error(e);
+                    }
                 })
                 .onErrorResume(ex -> {
-                    // Fail the request with 401 if validation fails
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                     return exchange.getResponse().setComplete();
                 });

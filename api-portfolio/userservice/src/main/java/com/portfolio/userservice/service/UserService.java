@@ -53,8 +53,7 @@ public class UserService {
         if(existingUser){
             throw new IllegalArgumentException("User already exist " + userDto);
         }
-    // Map DTO to entity and save
-//        userDto.setPassword(encoder.encode(userDto.getPassword()));
+
         User user = userMapper.fromGetUserDto(userDto);
 
         User savedUser = userRepository.save(user);
