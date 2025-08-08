@@ -27,13 +27,14 @@ public class RestrictedResourceGatewayFilterFactory extends AbstractGatewayFilte
   @Override
   public GatewayFilter apply(Object config) {
     return (exchange, chain) -> {
+      log.info("___________ resourse ------------------");
       Map<String, String> pathVariables =
           exchange.getAttribute(ServerWebExchangeUtils.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
 
       String requestedUuid = pathVariables != null ? pathVariables.get("id") : null;
       log.info("request id in uri {}",requestedUuid);
       if (requestedUuid == null || !isValidUUID(requestedUuid)) {
-        return deny(exchange, HttpStatus.BAD_REQUEST, "Invalid UUID");
+        return chain.filter(exchange);
       }
 
       String encodedClaim =

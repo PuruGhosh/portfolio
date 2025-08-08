@@ -1,6 +1,7 @@
 package com.portfolio.gateway_security.config.webclient;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +13,10 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 @AllArgsConstructor
+@Slf4j
 public class WebClientConfig {
   private final RouteLocator routeLocator;
+
 
   @Bean
   @LoadBalanced

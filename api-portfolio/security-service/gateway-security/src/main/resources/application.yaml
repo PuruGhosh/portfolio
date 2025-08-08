@@ -18,9 +18,6 @@ spring:
       uri: mongodb://test:test@localhost:27017/admin?retryWrites=true&loadBalanced=false&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1
       uuid-representation: standard
 
-  webflux:
-    base-path: /portfolio/gw/
-
   cloud:
     consul:
       host: localhost
@@ -31,7 +28,7 @@ spring:
         prefer-ip-address: true
         service-name: ${spring.application.name}
         instance-id: ${spring.application.name}-${spring.application.instance_id:${random.value}}
-        health-check-path: /portfolio/gw/actuator/health
+        health-check-path: /actuator/health
         health-check-interval: 50s
       config:
         enabled: true
@@ -42,30 +39,42 @@ spring:
         format: KEY_VALUE
 
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lowerCaseServiceId: true
-      routes:
-        - id: userservice-uuid
-          uri: lb://userservice
-          predicates:
-            - Path=/api/v1/users/{id}/**
-          filters:
-            - StripPrefix=2
-            - RestrictedResource
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+              lowerCaseServiceId: true
+          routes:
+            - id: stub-service
+              uri: lb://gateway-service
+              predicates:
+                - Path=/portfolio/gw/api/v1/**
+                - Header=x-stub-enabled, true
+              filters:
+                - StripPrefix=2
+                - StubPrefix
+            - id: userservice-uuid
+              uri: lb://userservice
+              predicates:
+                - Path=/portfolio/gw/api/v1/users/{id}/**
+              filters:
+                - StripPrefix=2
+                - RestrictedResource
 
-        - id: userservice
-          uri: lb://userservice
-          predicates:
-            - Path=/api/v1/users/**
-          filters:
-            - StripPrefix=2
+            - id: userservice
+              uri: lb://userservice
+              predicates:
+                - Path=/portfolio/gw/api/v1/users/**
+              filters:
+                - StripPrefix=2
 
-        - id: gateway-service
-          uri: lb://gateway-service
-          predicates:
-            - Path=/api/v1/auth/**
+            - id: gateway-service
+              uri: lb://gateway-service
+              predicates:
+                - Path=/portfolio/gw/api/v1/auth/**
+              filters:
+                - StripPrefix=2
 
 management:
   endpoints:
@@ -81,10 +90,29 @@ management:
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
-    reactor.netty: DEBUG
+    reactor.netty: INFO
 
 auth:
   jwt:
     encoded-secret: bXktc3VwZXItc2VjdXJlLWp3dC1zZWNyZXQta2V5LTI1Ni1iaXQ=
     expiry-hour: 5
     cookie-name: gw-jwt-token
+
+stub:
+  predicates:
+    - users
+    - auth
+  services:
+    - name: users
+      requests:
+        - path: /
+          methods:
+            - GET
+            - PUT
+          responseClass: com.portfolio.gateway_security.representation.dto.UserDto
+          reponseType: single
+        - path: /getAll
+          methods:
+            - GET
+          responseClass: com.portfolio.gateway_security.representation.dto.UserDto
+          reponseType: list-6

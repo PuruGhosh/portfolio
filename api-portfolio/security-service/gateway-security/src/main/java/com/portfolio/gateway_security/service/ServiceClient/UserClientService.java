@@ -1,12 +1,12 @@
 package com.portfolio.gateway_security.service.ServiceClient;
 
-import com.portfolio.gateway_security.config.webclient.ServiceId;
 import com.portfolio.gateway_security.config.webclient.WebClientConfig;
 import com.portfolio.gateway_security.representation.dto.ResponseDto;
 import com.portfolio.gateway_security.representation.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -17,12 +17,18 @@ import reactor.core.publisher.Mono;
 public class UserClientService {
 
   @Autowired private final WebClientConfig webClientConfig;
+  @Autowired private final DiscoveryClient discoveryClient;
 
 //  private Mono<WebClient> userClient = webClientConfig.getWebClient(ServiceId.USER_SERVICE);
 
   public Mono<UserDto> postUser(UserDto request) {
-    return webClientConfig
-        .getWebClient(ServiceId.USER_SERVICE)
+      String service = discoveryClient.getServices().stream()
+              .filter(s -> s.toLowerCase().contains("user"))
+              .findFirst()
+              .orElseThrow(() -> new RuntimeException("No user service found"));
+      log.info("Service found {}", service);
+      return webClientConfig
+        .getWebClient(service)
         .flatMap(
             client ->
                 client

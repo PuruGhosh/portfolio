@@ -33,10 +33,14 @@ public class DefaultDomainFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        log.info("Hello1");
         String jwtToken = Optional.ofNullable(exchange.getRequest().getCookies().getFirst(jwtCookieName))
                 .map(HttpCookie::getValue)
                 .orElse(null);
-
+        var mutatedExchange = exchange.mutate()
+                .request(builder -> builder.header("x-gateway-processed", "y"))
+                .build();
+        log.info("Hello 2");
         if (jwtToken == null || jwtToken.isBlank()) {
             return chain.filter(exchange); // No token, proceed without claims
         }
@@ -47,19 +51,19 @@ public class DefaultDomainFilter implements GlobalFilter, Ordered {
                         String base64Claims = Base64.getEncoder()
                                 .encodeToString(mapper.writeValueAsString(claims).getBytes(StandardCharsets.UTF_8));
 
-                        ServerWebExchange mutatedExchange = exchange.mutate()
+                        ServerWebExchange finalExchange = mutatedExchange.mutate()
                                 .request(builder -> builder.header("jwt-claim", base64Claims))
                                 .build();
-                        mutatedExchange.getResponse().getHeaders().add("jwt-claim", base64Claims);
+                        finalExchange.getResponse().getHeaders().add("jwt-claim", base64Claims);
 
-                        return chain.filter(mutatedExchange);
+                        return chain.filter(finalExchange);
                     } catch (JsonProcessingException e) {
                         return Mono.error(e);
                     }
                 })
                 .onErrorResume(ex -> {
                     exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                    return exchange.getResponse().setComplete();
+                    return mutatedExchange.getResponse().setComplete();
                 });
     }
 

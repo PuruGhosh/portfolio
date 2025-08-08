@@ -33,4 +33,18 @@ public class UserDto {
     private String bio;
     private List<String> skillTags;
     private List<String> projectTags;
+
+    public static UserDto getSampleData() {
+        return UserDto.builder()
+                .id(UUID.randomUUID())
+                .name("John Doe")
+                .email("john.doe@example.com")
+                .roles(List.of("USER", "ADMIN"))
+                .bio("A passionate developer with a love for clean code.")
+                .skillTags(List.of("Java", "Spring Boot", "React"))
+                .projectTags(List.of("Portfolio", "E-commerce"))
+                .build();
+    }
+
+
 }
